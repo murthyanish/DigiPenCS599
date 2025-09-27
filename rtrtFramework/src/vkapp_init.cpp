@@ -4,6 +4,7 @@
 #include <iostream>     // std::cout
 #include <fstream>      // std::ifstream
 
+#include <stdexcept>
 #include <unordered_set>
 #include <unordered_map>
 
@@ -32,6 +33,7 @@ void VkApp::destroyAllVulkanResources()
 
     // Destroy all vulkan objects.
     // ...  All objects created on m_device must be destroyed before m_device.
+    vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
     vkDestroyCommandPool(m_device, m_cmdPool, nullptr);
     vkDestroyDevice(m_device, nullptr);
     vkDestroyInstance(m_instance, nullptr);
@@ -359,9 +361,21 @@ void VkApp::getSurface()
 {
     VkBool32 isSupported;   // Supports drawing(presenting) on a screen
 
-    glfwCreateWindowSurface(m_instance, app->GLFW_window, nullptr, &m_surface);
-    vkGetPhysicalDeviceSurfaceSupportKHR(m_physicalDevice, m_graphicsQueueIndex,
-                                         m_surface, &isSupported);
+    if (glfwCreateWindowSurface(m_instance,
+          app->GLFW_window,
+          nullptr,
+          &m_surface) != VK_SUCCESS)
+        throw std::runtime_error("glfwCreateWindowSurface failed.");
+
+    if (vkGetPhysicalDeviceSurfaceSupportKHR(m_physicalDevice,
+          m_graphicsQueueIndex,
+          m_surface,
+          &isSupported) != VK_SUCCESS)
+        throw std::runtime_error("vkGetPhysicalDeviceSurfaceSupportKHR failed.");
+
+    if (isSupported != VK_TRUE)
+        throw std::runtime_error("Vulkan cannot present to this surface!!");
+
     // @@ Verify success of glfwCreateWindowSurface.
     // @@ Verify success of vkGetPhysicalDeviceSurfaceSupportKHR.
     // @@ Verify isSupported==VK_TRUE, meaning that Vulkan supports presenting on this surface.

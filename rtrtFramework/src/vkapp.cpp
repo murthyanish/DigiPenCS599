@@ -33,10 +33,10 @@ VkApp::VkApp(App* _app) : app(_app)
     createPhysicalDevice();		// -> m_physicalDevice i.e. the GPU
     chooseQueueIndex();		// -> m_graphicsQueueIndex
     createDevice();			// -> m_device
-    // getCommandQueue();		// -> m_queue
-    // createCommandPool();		// -> m_cmdPool
-    // loadExtensions();		// Auto generated; loads namespace of all known extensions
-    // getSurface();			// -> m_surface
+    getCommandQueue();		// -> m_queue
+    createCommandPool();		// -> m_cmdPool
+    loadExtensions();		// Auto generated; loads namespace of all known extensions
+    getSurface();			// -> m_surface
     
     // createSwapchain();		// -> m_swapchain
     // createDepthResource();		// -> m_depthImage, ...

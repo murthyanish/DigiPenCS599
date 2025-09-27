@@ -32,7 +32,7 @@ void VkApp::destroyAllVulkanResources()
 
     // Destroy all vulkan objects.
     // ...  All objects created on m_device must be destroyed before m_device.
-    //vkDestroyDevice(m_device, nullptr);
+    vkDestroyDevice(m_device, nullptr);
     vkDestroyInstance(m_instance, nullptr);
 }
 
@@ -53,6 +53,7 @@ void VkApp::createInstance(bool doApiDump)
     printf("GLFW required extensions:\n");
     for ( int i = 0; i < countGLFWextensions; ++i) {
       std::cout << std::string(reqGLFWextensions[i]);
+      reqInstanceExtensions.push_back(reqGLFWextensions[i]);
     }
     std::cout << std::endl;
     // Suggestion: Parse a command line argument to set/unset doApiDump
@@ -218,7 +219,9 @@ void VkApp::chooseQueueIndex()
     // the above three required flags?
     std::cout << "Queue family count: " << mpCount << std::endl;
     std::cout << std::endl;
+    int qIndex = 0;
     for (const auto& queue : queueProperties) {
+      std::cout << "Queue Index: " << qIndex << std::endl;
       std::cout << "Queue count: " << queue.queueCount << std::endl;
       std::cout << "  Flags: " << std::endl;
       std::cout << "  VK_QUEUE_GRAPHICS_BIT: " << ((VK_QUEUE_GRAPHICS_BIT & queue.queueFlags) ? "true" : "false") << std::endl;
@@ -229,9 +232,11 @@ void VkApp::chooseQueueIndex()
           && (VK_QUEUE_GRAPHICS_BIT & queue.queueFlags)
           && (VK_QUEUE_COMPUTE_BIT & queue.queueFlags)
           && (VK_QUEUE_TRANSFER_BIT & queue.queueFlags)) {
-        m_graphicsQueueIndex = queue.queueCount;
+        m_graphicsQueueIndex = qIndex; // queue.queueCount;
         std::cout << "Queue " << m_graphicsQueueIndex << " selected" << std::endl;
       }
+      qIndex++;
+      std::cout << std::endl;
     }
 
     // @@ Search the list for (the index of) the first queue family
@@ -253,22 +258,22 @@ void VkApp::createDevice()
     
     // =============
     VkPhysicalDeviceRayTracingPipelineFeaturesKHR rtPipelineFeature{
-        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR};
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR, nullptr};
     
     VkPhysicalDeviceAccelerationStructureFeaturesKHR accelFeature{
-        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR};
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR, &rtPipelineFeature};
     
     VkPhysicalDeviceVulkan13Features features13{
-        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES};
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES, &accelFeature};
     
     VkPhysicalDeviceVulkan12Features features12{
-        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES};
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES, &features13};
     
     VkPhysicalDeviceVulkan11Features features11{
-        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES};
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES, &features12};
     
     VkPhysicalDeviceFeatures2 features2{
-        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2, &features11};
     // =============
     
     // Ask Vulkan to fill in all structures on the pNext chain
@@ -290,7 +295,11 @@ void VkApp::createDevice()
     deviceCreateInfo.ppEnabledExtensionNames = reqDeviceExtensions.data();
 
     vkCreateDevice(m_physicalDevice, &deviceCreateInfo, nullptr, &m_device);
-
+    if (vkCreateDevice(m_physicalDevice,
+          &deviceCreateInfo,
+          nullptr,
+          &m_device) != VK_SUCCESS)
+        throw std::runtime_error("vkCreateInstance failed.");
     // @@ Verify success of vkCreateDevice.
     // To destroy: vkDestroyDevice(m_device, nullptr);
 }

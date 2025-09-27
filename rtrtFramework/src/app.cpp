@@ -1,5 +1,6 @@
 #include <iostream>
 #include <array>
+#include <vector>
 
 #include "vkapp.h"
 #include "app.h"
@@ -184,6 +185,14 @@ App::App(int argc, char** argv)
   
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     GLFW_window = glfwCreateWindow(WIDTH, HEIGHT, PROJECT.c_str(), nullptr, nullptr);
+
+    // In wayland, window doesn't appear until first write to compositor's buffer.
+    // This makes it annoying to test for project 1. I'm adding this here to help
+    // with testing later, since I have multiple screens.
+    // 
+    // int monitorCount;
+    // GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+    // GLFW_window = glfwCreateWindow(WIDTH, HEIGHT, PROJECT.c_str(), monitors[2], nullptr);
 
     if(!glfwVulkanSupported()) {
         printf("GLFW: Vulkan Not Supported\n");

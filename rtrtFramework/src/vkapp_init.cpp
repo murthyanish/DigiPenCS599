@@ -32,6 +32,7 @@ void VkApp::destroyAllVulkanResources()
 
     // Destroy all vulkan objects.
     // ...  All objects created on m_device must be destroyed before m_device.
+    vkDestroyCommandPool(m_device, m_cmdPool, nullptr);
     vkDestroyDevice(m_device, nullptr);
     vkDestroyInstance(m_instance, nullptr);
 }
@@ -299,7 +300,7 @@ void VkApp::createDevice()
           &deviceCreateInfo,
           nullptr,
           &m_device) != VK_SUCCESS)
-        throw std::runtime_error("vkCreateInstance failed.");
+        throw std::runtime_error("vkCreateDevice failed.");
     // @@ Verify success of vkCreateDevice.
     // To destroy: vkDestroyDevice(m_device, nullptr);
 }
@@ -321,7 +322,11 @@ void VkApp::createCommandPool()
     VkCommandPoolCreateInfo poolCreateInfo{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
     poolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     poolCreateInfo.queueFamilyIndex = m_graphicsQueueIndex;
-    vkCreateCommandPool(m_device, &poolCreateInfo, nullptr, &m_cmdPool);
+    if (vkCreateCommandPool(m_device,
+          &poolCreateInfo,
+          nullptr,
+          &m_cmdPool) != VK_SUCCESS)
+        throw std::runtime_error("vkCreateCommandPool failed.");
     // @@ Verify success of vkCreateCommandPool
     // @@ To destroy: vkDestroyCommandPool(m_device, m_cmdPool, nullptr);
     
@@ -331,7 +336,10 @@ void VkApp::createCommandPool()
     allocateInfo.commandPool        = m_cmdPool;
     allocateInfo.commandBufferCount = m_imageCount;
     allocateInfo.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    vkAllocateCommandBuffers(m_device, &allocateInfo, m_commandBuffers.data());
+    if (vkAllocateCommandBuffers(m_device,
+          &allocateInfo,
+          m_commandBuffers.data()) != VK_SUCCESS)
+        throw std::runtime_error("vkAllocateCommandBuffers failed.");
     // @@ Verify success of vkAllocateCommandBuffers
     // @@ Nothing to destroy -- the pool owns the command buffer.
 }

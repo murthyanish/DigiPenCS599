@@ -169,11 +169,37 @@ void VkApp::createPhysicalDevice()
         // making an std::unordered_set of all the device's
         // extensionNames and using its "find" method to search for
         // each required extension.
+        bool compatible = true;
+        if (GPUproperties.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+            compatible = false;
+            std::cout << "Device " << GPUproperties.deviceName << " rejected as not a discrete GPU" << std::endl;
+            continue;
+        }
+
+        std::unordered_set<std::string> extensionPropertiesSet;
+        extensionPropertiesSet.reserve(extensionProperties.size());
+        for (const auto& extension : extensionProperties)
+          extensionPropertiesSet.emplace(extension.extensionName);
+
+        for ( const auto& extension : reqDeviceExtensions) {
+            if (extensionPropertiesSet.find(extension) == extensionPropertiesSet.end()) {
+                compatible = false;
+                std::cout << "Device " << GPUproperties.deviceName << " rejected as extension " << extension << " not supported" << std::endl;
+                break;
+            }
+        }
+        if (!m_physicalDevice) {
+            m_physicalDevice = physicalDevice;
+            std::cout << "Device " << GPUproperties.deviceName << " selected" << std::endl;
+        }
     }
-    
+
     // @@ Document the GPU accepted, and any GPUs rejected.
     // Oddly, there is nothing to destroy here.
-  
+
+    std::cout << std::endl;
+    // Device NVIDIA GeForce RTX 4080 Laptop GPU selected
+    // I have specified only this vulkan icd file, so only this GPU is read by the API.
 }
 
 void VkApp::chooseQueueIndex()
@@ -190,6 +216,23 @@ void VkApp::chooseQueueIndex()
     // @@ How many queue families does your Vulkan offer?  Which of
     // the three flags does each offer?  Which of them, by index, has
     // the above three required flags?
+    std::cout << "Queue family count: " << mpCount << std::endl;
+    std::cout << std::endl;
+    for (const auto& queue : queueProperties) {
+      std::cout << "Queue count: " << queue.queueCount << std::endl;
+      std::cout << "  Flags: " << std::endl;
+      std::cout << "  VK_QUEUE_GRAPHICS_BIT: " << ((VK_QUEUE_GRAPHICS_BIT & queue.queueFlags) ? "true" : "false") << std::endl;
+      std::cout << "  VK_QUEUE_COMPUTE_BIT: " << ((VK_QUEUE_COMPUTE_BIT & queue.queueFlags) ? "true" : "false") << std::endl;
+      std::cout << "  VK_QUEUE_TRANSFER_BIT: " << ((VK_QUEUE_TRANSFER_BIT & queue.queueFlags) ? "true" : "false") << std::endl;
+
+      if (m_graphicsQueueIndex == VK_QUEUE_FAMILY_IGNORED
+          && (VK_QUEUE_GRAPHICS_BIT & queue.queueFlags)
+          && (VK_QUEUE_COMPUTE_BIT & queue.queueFlags)
+          && (VK_QUEUE_TRANSFER_BIT & queue.queueFlags)) {
+        m_graphicsQueueIndex = queue.queueCount;
+        std::cout << "Queue " << m_graphicsQueueIndex << " selected" << std::endl;
+      }
+    }
 
     // @@ Search the list for (the index of) the first queue family
     // that has the required flags in queueProperties[i].queueFlags.  Record the index in

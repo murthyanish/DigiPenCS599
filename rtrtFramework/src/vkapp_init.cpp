@@ -11,6 +11,8 @@
 #include "vkapp.h"
 #include "app.h"
 #include "extensions_vk.hpp"
+#include <vulkan/vk_enum_string_helper.h>
+#include <vulkan/vulkan_core.h>
 
 #ifdef GUI
 #include "backends/imgui_impl_glfw.h"
@@ -33,6 +35,13 @@ void VkApp::destroyAllVulkanResources()
 
     // Destroy all vulkan objects.
     // ...  All objects created on m_device must be destroyed before m_device.
+    vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
+    for (int i = 0; i < m_imageCount; ++i) {
+        vkDestroyImageView(m_device, m_imageViews[i], nullptr);
+        vkDestroyFence(m_device, m_inFlightFences[i], nullptr);
+        vkDestroySemaphore(m_device, m_imageAvailableSemaphores[i], nullptr);
+        vkDestroySemaphore(m_device, m_renderFinishedSemaphores[i], nullptr);
+    }
     vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
     vkDestroyCommandPool(m_device, m_cmdPool, nullptr);
     vkDestroyDevice(m_device, nullptr);
@@ -400,6 +409,19 @@ void VkApp::createSwapchain()
     // your system offers VK_PRESENT_MODE_MAILBOX_KHR mode.  My
     // high-end windows desktop does; My higher-end Linux laptop
     // doesn't.
+    
+    // Retrieve the list of PRESENT MODEs. (3 step.)
+    uint32_t pmCount;
+    vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &pmCount, nullptr);
+    std::vector<VkPresentModeKHR> presentModeProperties(pmCount);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &pmCount, presentModeProperties.data());
+
+    std::cout << "PRESENT MODEs:" << std::endl;
+    for (const auto& presentMode : presentModeProperties) {
+      std::cout << string_VkPresentModeKHR(presentMode) << std::endl;
+    }
+    std::cout << std::endl;
+
 
     // Choose VK_PRESENT_MODE_FIFO_KHR as a default (this must be supported)
     VkPresentModeKHR swapchainPresentMode = VK_PRESENT_MODE_FIFO_KHR; // Support is required.
@@ -407,25 +429,45 @@ void VkApp::createSwapchain()
     // the retrieved presentModes. Several Vulkan tutorials opine that
     // MODE_MAILBOX is the premier mode, but this may not be best for
     // us.
-  
 
     // Get the list of VkFormat's that are supported:
     // @@ Do the three step process to retrieve a list of surface formats into
     //   std::vector<VkSurfaceFormatKHR> formats;
     // using  vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &count, nullptr);
     // @@ Document the list you get.
+    uint32_t fmtCount;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &fmtCount, nullptr);
+    std::vector<VkSurfaceFormatKHR> formats(fmtCount);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &fmtCount, formats.data());
 
-    VkFormat surfaceFormat       = VK_FORMAT_UNDEFINED;               // Temporary value.
-    VkColorSpaceKHR surfaceColor = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR; // Temporary value
+    bool hasVK_FORMAT_B8G8R8A8_UNORM = false;
+    VkSurfaceFormatKHR formatVK_FORMAT_B8G8R8A8_UNORM{};
+
+    std::cout << "Formats:" << std::endl;
+    for (const auto& format : formats) {
+      std::cout << string_VkFormat(format.format) << ", " << string_VkColorSpaceKHR(format.colorSpace) << std::endl;
+      if (format.format == VK_FORMAT_B8G8R8A8_UNORM) {
+        hasVK_FORMAT_B8G8R8A8_UNORM = true;
+        formatVK_FORMAT_B8G8R8A8_UNORM = format;
+      }
+    }
+    std::cout << std::endl;
+
+    // VkFormat surfaceFormat       = VK_FORMAT_UNDEFINED;               // Temporary value.
+    // VkColorSpaceKHR surfaceColor = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR; // Temporary value
     // @@ Replace the above two temporary lines with the following two
     // to choose the first format and its color space as defaults:
-    //  VkFormat surfaceFormat = formats[0].format;
-    //  VkColorSpaceKHR surfaceColor  = formats[0].colorSpace;
+     VkFormat surfaceFormat = formats[0].format;
+     VkColorSpaceKHR surfaceColor  = formats[0].colorSpace;
 
     // @@ Then search the formats (from several lines up) to choose
     // format VK_FORMAT_B8G8R8A8_UNORM (and its color space) if such
     // exists.  Document your list of formats/color-spaces, and your
     // particular choice.
+    if (hasVK_FORMAT_B8G8R8A8_UNORM) {
+      surfaceFormat = formatVK_FORMAT_B8G8R8A8_UNORM.format;
+      surfaceColor = formatVK_FORMAT_B8G8R8A8_UNORM.colorSpace;
+    }
     
     // Get the swap chain extent
     VkExtent2D swapchainExtent = capabilities.currentExtent;
@@ -473,13 +515,25 @@ void VkApp::createSwapchain()
     createInfo.oldSwapchain             = oldSwapchain;
     createInfo.clipped                  = true;
 
-    vkCreateSwapchainKHR(m_device, &createInfo, nullptr, &m_swapchain);
+    if (vkCreateSwapchainKHR(m_device,
+          &createInfo,
+          nullptr,
+          &m_swapchain) != VK_SUCCESS)
+        throw std::runtime_error("vkCreateSwapchainKHR failed.");
     
     // @@ Verify success of vkCreateSwapchainKHR
     
     // @@ Do the three step process to retrieve the list of swapchain images into
     //    std::vector<VkImage> m_swapchainImages;
     // using call vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_imageCount, nullptr);
+    // uint32_t m_imageCount;
+    if (vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_imageCount, nullptr))
+        throw std::runtime_error("vkGetSwapchainImagesKHR failed.");
+
+    std::vector<VkImage> m_swapchainImages(m_imageCount);
+    if (vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_imageCount, m_swapchainImages.data()) != VK_SUCCESS)
+        throw std::runtime_error("vkGetSwapchainImagesKHR failed.");
+
     
     // @@ Verify success of vkGetSwapchainImagesKHR
     

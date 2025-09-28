@@ -152,6 +152,8 @@ public:
 
     ImageWrap m_depthImage;
     void createDepthResource();
+    VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+    VkFormat findDepthFormat();
     
     VkPipelineLayout m_postPipelineLayout{VK_NULL_HANDLE};
     VkRenderPass m_postRenderPass{};

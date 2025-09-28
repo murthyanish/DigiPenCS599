@@ -418,8 +418,8 @@ void VkApp::createSwapchain()
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &capabilities);
 
     if (capabilities.minImageCount > m_imageCount) {
-      m_imageCount = capabilities.minImageCount;
-      std::cout << "**WARNING** This device has a minImageCount of " << m_imageCount << "! Using this number instead!" << std::endl;
+      m_imageCount = capabilities.minImageCount + 1;
+      std::cout << "**WARNING** This device has a minImageCount of " << capabilities.minImageCount << "! Using " << m_imageCount << " instead!" << std::endl;
     }
 
     // @@  Roll your own three step process to retrieve a list of PRESENT MODEs into

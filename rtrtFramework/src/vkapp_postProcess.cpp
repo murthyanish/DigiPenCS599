@@ -68,7 +68,7 @@ void VkApp::createPostRenderPass()
 
     // Depth attachment
     if (m_deviceIsIntegrated)
-      attachments[1].format        = VK_FORMAT_D24_UNORM_S8_UINT;
+      attachments[1].format        = findDepthFormat();
     else
       attachments[1].format        = VK_FORMAT_X8_D24_UNORM_PACK32;
     attachments[1].loadOp        = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -308,6 +308,7 @@ std::string VkApp::loadFile(const std::string& filename)
 // Post processing pass: tone mapper, UI
 void VkApp::postProcess()
 {
+    std::cout << "Started postProcess" << std::endl;
     std::array<VkClearValue, 2> clearValues{};
     clearValues[0].color        = {{1,1,1,1}};
     clearValues[1].depthStencil = {1.0f, 0};
@@ -340,4 +341,5 @@ void VkApp::postProcess()
         #endif
     }
     vkCmdEndRenderPass(m_commandBuffer);
+    std::cout << "Finished postProcess" << std::endl;
 }

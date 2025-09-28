@@ -35,6 +35,9 @@ void VkApp::destroyAllVulkanResources()
 
     // Destroy all vulkan objects.
     // ...  All objects created on m_device must be destroyed before m_device.
+    for (uint32_t i = 0; i < m_imageCount; i++) {
+      vkDestroyFramebuffer(m_device, m_framebuffers[i], nullptr);
+    }
     vkDestroyRenderPass(m_device, m_postRenderPass, nullptr);
     m_depthImage.destroy(m_device);
     vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);

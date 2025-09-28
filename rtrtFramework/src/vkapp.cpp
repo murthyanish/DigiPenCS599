@@ -41,7 +41,7 @@ VkApp::VkApp(App* _app) : app(_app)
     createSwapchain();		// -> m_swapchain
     createDepthResource();		// -> m_depthImage, ...
     createPostRenderPass();		// -> m_postRenderPass
-    // createPostFrameBuffers();	// -> m_framebuffers
+    createPostFrameBuffers();	// -> m_framebuffers
 
     // createRenderTarget();		// -> m_renderTarget
     // createPostDescriptor();		// -> m_postDesc

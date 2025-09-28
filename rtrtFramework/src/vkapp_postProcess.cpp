@@ -6,6 +6,7 @@
 
 #include <unordered_set>
 #include <unordered_map>
+#include <vulkan/vulkan_core.h>
 
 #include "vkapp.h"
 #include "app.h"
@@ -97,7 +98,9 @@ void VkApp::createPostFrameBuffers()
     for(uint32_t i = 0; i < m_imageCount; i++) {
         fbattachments[0] = m_imageViews[i];         // A color attachment from the swap chain
         fbattachments[1] = m_depthImage.imageView;  // A depth attachment
-        vkCreateFramebuffer(m_device, &createInfo, nullptr, &m_framebuffers[i]); }
+        if (vkCreateFramebuffer(m_device, &createInfo, nullptr, &m_framebuffers[i]) != VK_SUCCESS)
+          throw std::runtime_error("vkCreateFramebuffer failed.");
+    }
 
     // @@ Verify success of all 3 (or whatever) vkCreateFramebuffer calls
     // @@ Destroy each framebuffer with: vkDestroyFramebuffer(m_device, m_framebuffers[i], nullptr);

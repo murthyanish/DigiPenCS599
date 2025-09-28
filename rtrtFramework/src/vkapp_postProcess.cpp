@@ -14,6 +14,20 @@
 
 void VkApp::createDepthResource() 
 {
+    // VkImageFormatProperties2 props;
+    // if (vkGetPhysicalDeviceImageFormatProperties2(m_physicalDevice,
+    //       VK_FORMAT_X8_D24_UNORM_PACK32,
+    //       &props) == VK_ERROR_FORMAT_NOT_SUPPORTED) {
+    //   initImageWrap(m_depthImage, m_windowSize,
+    //               VK_FORMAT_X8_D24_UNORM_PACK32,
+    //               VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+    //               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+    //               VK_IMAGE_ASPECT_DEPTH_BIT,
+    //               VK_IMAGE_LAYOUT_UNDEFINED,
+    //               1);
+    //   return;
+    // }
+
     // Note m_depthImage is type ImageWrap; a tiny wrapper around
     // several related Vulkan objects.
     initImageWrap(m_depthImage, m_windowSize,

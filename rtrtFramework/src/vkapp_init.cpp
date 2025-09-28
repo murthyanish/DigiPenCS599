@@ -195,9 +195,9 @@ void VkApp::createPhysicalDevice()
         // each required extension.
         bool compatible = true;
         if (GPUproperties.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
-            compatible = false;
-            std::cout << "Device " << GPUproperties.deviceName << " rejected as not a discrete GPU" << std::endl;
-            continue;
+        //     compatible = false;
+          std::cout << "Device " << GPUproperties.deviceName << " is not a discrete GPU" << std::endl;
+        //     continue;
         }
 
         std::unordered_set<std::string> extensionPropertiesSet;
@@ -415,6 +415,11 @@ void VkApp::createSwapchain()
     // Get the surface's capabilities
     VkSurfaceCapabilitiesKHR capabilities;
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &capabilities);
+
+    if (capabilities.minImageCount > m_imageCount) {
+      m_imageCount = capabilities.minImageCount;
+      std::cout << "**WARNING** This device has a minImageCount of " << m_imageCount << "! Using this number instead!" << std::endl;
+    }
 
     // @@  Roll your own three step process to retrieve a list of PRESENT MODEs into
     //    std::vector<VkPresentModeKHR> presentModes;

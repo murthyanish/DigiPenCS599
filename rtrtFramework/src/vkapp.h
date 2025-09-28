@@ -118,6 +118,7 @@ public:
 
     VkDevice m_device{};
     void createDevice();
+    bool m_deviceIsIntegrated = false;
 
     VkQueue m_queue{};
     void getCommandQueue();

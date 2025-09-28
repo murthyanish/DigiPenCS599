@@ -197,6 +197,7 @@ void VkApp::createPhysicalDevice()
         if (GPUproperties.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
         //     compatible = false;
           std::cout << "Device " << GPUproperties.deviceName << " is not a discrete GPU" << std::endl;
+          m_deviceIsIntegrated = true;
         //     continue;
         }
 

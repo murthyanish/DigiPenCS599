@@ -27,11 +27,16 @@ void VkApp::createDepthResource()
     //               1);
     //   return;
     // }
+    VkFormat imgFormat;
+    if (m_deviceIsIntegrated) 
+      imgFormat = VK_FORMAT_D24_UNORM_S8_UINT;
+    else
+      imgFormat = VK_FORMAT_X8_D24_UNORM_PACK32;
 
     // Note m_depthImage is type ImageWrap; a tiny wrapper around
     // several related Vulkan objects.
     initImageWrap(m_depthImage, m_windowSize,
-                  VK_FORMAT_X8_D24_UNORM_PACK32,
+                  imgFormat,
                   VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                   VK_IMAGE_ASPECT_DEPTH_BIT,
@@ -52,7 +57,10 @@ void VkApp::createPostRenderPass()
     attachments[0].samples     = VK_SAMPLE_COUNT_1_BIT;
 
     // Depth attachment
-    attachments[1].format        = VK_FORMAT_X8_D24_UNORM_PACK32;
+    if (m_deviceIsIntegrated)
+      attachments[1].format        = VK_FORMAT_D24_UNORM_S8_UINT;
+    else
+      attachments[1].format        = VK_FORMAT_X8_D24_UNORM_PACK32;
     attachments[1].loadOp        = VK_ATTACHMENT_LOAD_OP_CLEAR;
     attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     attachments[1].finalLayout   = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;

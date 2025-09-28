@@ -45,7 +45,7 @@ VkApp::VkApp(App* _app) : app(_app)
 
     // createRenderTarget();		// -> m_renderTarget
     // createPostDescriptor();		// -> m_postDesc
-    // createPostPipeline();		// -> m_postPipelineLayout
+    createPostPipeline();		// -> m_postPipelineLayout
 
     #ifdef GUI
     initGUI();
@@ -79,11 +79,11 @@ VkApp::VkApp(App* _app) : app(_app)
 void VkApp::drawFrame()
 {
 
-    // prepareFrame();
+    prepareFrame();
     
-    // VkCommandBufferBeginInfo beginInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
-    // beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    // vkBeginCommandBuffer(m_commandBuffer, &beginInfo);
+    VkCommandBufferBeginInfo beginInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    vkBeginCommandBuffer(m_commandBuffer, &beginInfo);
     
     {   // Extra indent for code clarity
         // updateCameraBuffer();
@@ -95,11 +95,11 @@ void VkApp::drawFrame()
         // } else
         //     rasterize();
         
-        // postProcess(); //  tone mapper and output to swapchain image.
+        postProcess(); //  tone mapper and output to swapchain image.
     }   // Done recording;  Execute!
     
-    // vkEndCommandBuffer(m_commandBuffer);
-    // submitFrame();  // Submit for display
+    vkEndCommandBuffer(m_commandBuffer);
+    submitFrame();  // Submit for display
 }
 
 

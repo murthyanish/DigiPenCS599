@@ -24,9 +24,9 @@
 void VkApp::destroyAllVulkanResources()
 {
     // @@  Uncomment next 3 lines when directed to do so at the end of postProcess().
-    //vkWaitForFences(m_device, 1, &m_inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
-    //vkResetFences(m_device, 1, &m_inFlightFences[currentFrame]);
-    //vkDeviceWaitIdle(m_device);
+    vkWaitForFences(m_device, 1, &m_inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+    vkResetFences(m_device, 1, &m_inFlightFences[currentFrame]);
+    vkDeviceWaitIdle(m_device);
     
     #ifdef GUI
     vkDestroyDescriptorPool(m_device, m_imguiDescPool, nullptr);
@@ -35,6 +35,8 @@ void VkApp::destroyAllVulkanResources()
 
     // Destroy all vulkan objects.
     // ...  All objects created on m_device must be destroyed before m_device.
+    vkDestroyPipeline(m_device, m_postPipeline, nullptr);
+    vkDestroyPipelineLayout(m_device, m_postPipelineLayout, nullptr);
     for (uint32_t i = 0; i < m_imageCount; i++) {
       vkDestroyFramebuffer(m_device, m_framebuffers[i], nullptr);
     }
@@ -319,7 +321,6 @@ void VkApp::createDevice()
     deviceCreateInfo.enabledExtensionCount   = static_cast<uint32_t>(reqDeviceExtensions.size());
     deviceCreateInfo.ppEnabledExtensionNames = reqDeviceExtensions.data();
 
-    vkCreateDevice(m_physicalDevice, &deviceCreateInfo, nullptr, &m_device);
     if (vkCreateDevice(m_physicalDevice,
           &deviceCreateInfo,
           nullptr,

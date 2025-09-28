@@ -243,8 +243,8 @@ void VkApp::createPostPipeline()
     // The pipeline has fully compiled copies of the shaders, so these
     // intermediate (SPV) versions can be destroyed.
     // @@ *HERE* Destroy the two shader modules here instead of in destroyAllVulkanResources
-    //   vkDestroyShaderModule(m_device, fragShaderModule, nullptr);
-    //   vkDestroyShaderModule(m_device, vertShaderModule, nullptr);
+    vkDestroyShaderModule(m_device, fragShaderModule, nullptr);
+    vkDestroyShaderModule(m_device, vertShaderModule, nullptr);
 
     // @@ Uncomment three lines at the top of
     // destroyAllVulkanResources.  Their purpose is to ensure the

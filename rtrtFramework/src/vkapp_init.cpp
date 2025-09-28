@@ -345,6 +345,18 @@ void VkApp::getCommandQueue()
 // Use the command pool to also create a command buffer.
 void VkApp::createCommandPool()
 {
+    // On some devices, the minimum image count is not 2!
+    // Adding this here (before first use of m_imageCount) to make sure nothing
+    // breaks.
+    // Get the surface's capabilities
+    VkSurfaceCapabilitiesKHR capabilities;
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &capabilities);
+
+    if (capabilities.minImageCount > m_imageCount) {
+      m_imageCount = capabilities.minImageCount + 1;
+      std::cout << "**WARNING** This device has a minImageCount of " << capabilities.minImageCount << "! Using " << m_imageCount << " instead!" << std::endl;
+    }
+
     VkCommandPoolCreateInfo poolCreateInfo{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
     poolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     poolCreateInfo.queueFamilyIndex = m_graphicsQueueIndex;
@@ -416,11 +428,6 @@ void VkApp::createSwapchain()
     // Get the surface's capabilities
     VkSurfaceCapabilitiesKHR capabilities;
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &capabilities);
-
-    if (capabilities.minImageCount > m_imageCount) {
-      m_imageCount = capabilities.minImageCount + 1;
-      std::cout << "**WARNING** This device has a minImageCount of " << capabilities.minImageCount << "! Using " << m_imageCount << " instead!" << std::endl;
-    }
 
     // @@  Roll your own three step process to retrieve a list of PRESENT MODEs into
     //    std::vector<VkPresentModeKHR> presentModes;

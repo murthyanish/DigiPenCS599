@@ -308,7 +308,6 @@ std::string VkApp::loadFile(const std::string& filename)
 // Post processing pass: tone mapper, UI
 void VkApp::postProcess()
 {
-    std::cout << "Started postProcess" << std::endl;
     std::array<VkClearValue, 2> clearValues{};
     clearValues[0].color        = {{1,1,1,1}};
     clearValues[1].depthStencil = {1.0f, 0};
@@ -341,5 +340,4 @@ void VkApp::postProcess()
         #endif
     }
     vkCmdEndRenderPass(m_commandBuffer);
-    std::cout << "Finished postProcess" << std::endl;
 }

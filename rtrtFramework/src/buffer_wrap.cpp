@@ -1,5 +1,6 @@
 #include "buffer_wrap.h"
 #include "vkapp.h"
+#include <vulkan/vulkan_core.h>
 
 void VkApp::initBufferWrap(BufferWrap& wrap, VkDeviceSize size, VkBufferUsageFlags usage,
                            VkMemoryPropertyFlags properties)
@@ -56,7 +57,11 @@ void VkApp::initImageWrap(ImageWrap& wrap,
     imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    vkCreateImage(m_device, &imageInfo, nullptr, &wrap.image);
+    if (vkCreateImage(m_device,
+          &imageInfo,
+          nullptr,
+          &wrap.image) != VK_SUCCESS)
+      throw std::runtime_error("vkCreateImage failed.");
 
     // Create and bind the associated VkDeviceMemory
     VkMemoryRequirements memRequirements;
@@ -67,7 +72,11 @@ void VkApp::initImageWrap(ImageWrap& wrap,
     allocInfo.memoryTypeIndex = findMemoryType(m_physicalDevice, 
                                                memRequirements.memoryTypeBits, properties);
 
-    vkAllocateMemory(m_device, &allocInfo, nullptr, &wrap.memory);
+    if (vkAllocateMemory(m_device,
+          &allocInfo,
+          nullptr,
+          &wrap.memory) != VK_SUCCESS)
+      throw std::runtime_error("vkAllocateMemory failed.");
     
     vkBindImageMemory(m_device, wrap.image, wrap.memory, 0);
 
@@ -82,7 +91,11 @@ void VkApp::initImageWrap(ImageWrap& wrap,
     viewInfo.subresourceRange.baseArrayLayer = 0;
     viewInfo.subresourceRange.layerCount = 1;
     
-    vkCreateImageView(m_device, &viewInfo, nullptr, &wrap.imageView);
+    if (vkCreateImageView(m_device,
+          &viewInfo,
+          nullptr,
+          &wrap.imageView) != VK_SUCCESS)
+      throw std::runtime_error("vkAllocateMemory failed.");
 
     // Do not create a sampler; a different call will do that
     wrap.sampler = VK_NULL_HANDLE;

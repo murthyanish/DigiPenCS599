@@ -68,6 +68,7 @@ void VkApp::createInstance(bool doApiDump)
       reqInstanceExtensions.push_back(reqGLFWextensions[i]);
     }
     std::cout << std::endl;
+    std::cout << std::endl;
     // Suggestion: Parse a command line argument to set/unset doApiDump
     // If included, the api_dump layer should be first on reqInstanceLayers
     if (doApiDump)
@@ -87,10 +88,12 @@ void VkApp::createInstance(bool doApiDump)
 
     // @@ Print out the availableLayers
     printf("InstanceLayer count: %d\n", count);
+    std::cout << std::endl;
     printf("Available Layers:\n");
     for (int i = 0; i < count; ++i) {
         printf("%s\n", availableLayers[i].layerName);
     }
+    std::cout << std::endl;
 
     // Another three step dance
     vkEnumerateInstanceExtensionProperties(nullptr, &count, nullptr);
@@ -102,6 +105,7 @@ void VkApp::createInstance(bool doApiDump)
     for (int i = 0; i < count; ++i) {
         printf("%s\n", availableExtensions[i].extensionName);
     }
+    std::cout << std::endl;
 
     VkApplicationInfo applicationInfo{VK_STRUCTURE_TYPE_APPLICATION_INFO};
     applicationInfo.pApplicationName = "rtrt";
@@ -230,7 +234,6 @@ void VkApp::chooseQueueIndex()
     // the three flags does each offer?  Which of them, by index, has
     // the above three required flags?
     std::cout << "Queue family count: " << mpCount << std::endl;
-    std::cout << std::endl;
     int qIndex = 0;
     for (const auto& queue : queueProperties) {
       std::cout << "Queue Index: " << qIndex << std::endl;
@@ -245,15 +248,20 @@ void VkApp::chooseQueueIndex()
           && (VK_QUEUE_COMPUTE_BIT & queue.queueFlags)
           && (VK_QUEUE_TRANSFER_BIT & queue.queueFlags)) {
         m_graphicsQueueIndex = qIndex; // queue.queueCount;
-        std::cout << "Queue " << m_graphicsQueueIndex << " selected" << std::endl;
       }
-      qIndex++;
-      std::cout << std::endl;
     }
 
     // @@ Search the list for (the index of) the first queue family
     // that has the required flags in queueProperties[i].queueFlags.  Record the index in
     // m_graphicsQueueIndex.
+    std::cout << std::endl;
+    if (m_graphicsQueueIndex != VK_QUEUE_FAMILY_IGNORED) {
+      std::cout << "Queue " << m_graphicsQueueIndex << " selected" << std::endl;
+    }
+    else {
+      throw std::runtime_error("Graphics Queue not found!");
+    }
+    std::cout << std::endl;
 
     // Nothing to destroy as m_graphicsQueueIndex is just an integer.
 }
@@ -416,9 +424,12 @@ void VkApp::createSwapchain()
     std::vector<VkPresentModeKHR> presentModeProperties(pmCount);
     vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &pmCount, presentModeProperties.data());
 
+    bool pmVK_PRESENT_MODE_MAILBOX_KHR = false;
     std::cout << "PRESENT MODEs:" << std::endl;
     for (const auto& presentMode : presentModeProperties) {
       std::cout << string_VkPresentModeKHR(presentMode) << std::endl;
+      if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+        pmVK_PRESENT_MODE_MAILBOX_KHR = true;
     }
     std::cout << std::endl;
 
@@ -429,6 +440,12 @@ void VkApp::createSwapchain()
     // the retrieved presentModes. Several Vulkan tutorials opine that
     // MODE_MAILBOX is the premier mode, but this may not be best for
     // us.
+    if (pmVK_PRESENT_MODE_MAILBOX_KHR) {
+      swapchainPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+    }
+
+    std::cout << "PRESENT MODE: " << string_VkPresentModeKHR(swapchainPresentMode) << " selected" << std::endl;
+    std::cout << std::endl;
 
     // Get the list of VkFormat's that are supported:
     // @@ Do the three step process to retrieve a list of surface formats into
@@ -468,13 +485,17 @@ void VkApp::createSwapchain()
       surfaceFormat = formatVK_FORMAT_B8G8R8A8_UNORM.format;
       surfaceColor = formatVK_FORMAT_B8G8R8A8_UNORM.colorSpace;
     }
-    
+    std::cout << "Format: " << string_VkFormat(surfaceFormat) << " selected" << std::endl;
+    std::cout << std::endl;
+
     // Get the swap chain extent
     VkExtent2D swapchainExtent = capabilities.currentExtent;
     if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
         swapchainExtent = capabilities.currentExtent; }
     else {
         // Does this case ever happen?
+        std::cout << "swapchainExtent is equal to uint32_t max!" << std::endl;
+        std::cout << "swapchainExtent: " << swapchainExtent.width << std::endl;
         int width, height;
         glfwGetFramebufferSize(app->GLFW_window, &width, &height);
 
@@ -485,7 +506,9 @@ void VkApp::createSwapchain()
                                            capabilities.maxImageExtent.width);
         swapchainExtent.height = std::clamp(swapchainExtent.height,
                                             capabilities.minImageExtent.height,
-                                            capabilities.maxImageExtent.height); }
+                                            capabilities.maxImageExtent.height);
+    }
+    std::cout << std::endl;
 
     // Test against valid size, typically hit when windows are minimized.
     // The app must prevent triggering this code in such a case
@@ -572,7 +595,7 @@ void VkApp::createSwapchain()
         range.levelCount              = VK_REMAINING_MIP_LEVELS;
         range.baseArrayLayer          = 0;
         range.layerCount              = VK_REMAINING_ARRAY_LAYERS;
-        
+
         VkImageMemoryBarrier memBarrier = {VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
         memBarrier.dstAccessMask        = 0;
         memBarrier.srcAccessMask        = 0;
@@ -610,16 +633,16 @@ void VkApp::createSwapchain()
         fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
         vkCreateFence(m_device, &fenceCreateInfo, nullptr, &m_inFlightFences[i]);
         NAME(m_inFlightFences[i], VK_OBJECT_TYPE_FENCE, "m_inFlightFence");
-    
+
         VkSemaphoreCreateInfo semCreateInfo = {VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
         vkCreateSemaphore(m_device, &semCreateInfo, nullptr, &m_imageAvailableSemaphores[i]);
         vkCreateSemaphore(m_device, &semCreateInfo, nullptr, &m_renderFinishedSemaphores[i]);
         NAME(m_imageAvailableSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, "m_imageAvailableSemaphore");
         NAME(m_renderFinishedSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, "m_renderFinishedSemaphore");
     }
-        
+
     m_windowSize = swapchainExtent;
-    
+
     // @@ Destroy ALL m_imageViews and synchronization items (looping i through m_imageCount):
     //      vkDestroyImageView(m_device, m_imageViews[i], nullptr)
     //      vkDestroyFence(m_device, m_inFlightFences[i], nullptr);

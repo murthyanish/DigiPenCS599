@@ -311,6 +311,8 @@ bool ModelData::readAssimpFile(const std::string &path, const mat4 &M) {
 
     aiString texPath;
     if (AI_SUCCESS == mtl->GetTexture(aiTextureType_DIFFUSE, 0, &texPath)) {
+      // Fun fact: The library in my system is built for 64 bit, but the included header is for 32 bit.
+      // The mismatch causes the first 4 characters to get lost from the texPath.
       fs::path fullPath = path;
       fullPath.replace_filename(texPath.C_Str());
       std::cout << "Texture: " << fullPath << std::endl;
@@ -401,7 +403,7 @@ ImageWrap VkApp::readTextureFile(std::string fileName) {
   VkDeviceSize imageSize = texWidth * texHeight * 4;
 
   if (!pixels) {
-    throw std::runtime_error("failed to load texture image!");
+    throw std::runtime_error("failed to load texture image!" + fileName);
   }
 
   BufferWrap staging;

@@ -52,9 +52,9 @@ VkApp::VkApp(App* _app) : app(_app)
     #endif
     
     // Load model and create related entities
-    // loadModel();
-    // createMatrixBuffer();
-    // createObjDescriptionBuffer();
+    loadModel();
+    createMatrixBuffer();
+    createObjDescriptionBuffer();
     
     // Scanline: Initialize scanline capabilities
     // createScRenderPass();

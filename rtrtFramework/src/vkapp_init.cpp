@@ -35,18 +35,42 @@ void VkApp::destroyAllVulkanResources()
 
     // Destroy all vulkan objects.
     // ...  All objects created on m_device must be destroyed before m_device.
+
+    // createObjDescriptionBuffer() resources
+    m_objDescriptionBuff.destroy(m_device);
+
+    // createMatrixBuffer() resources
+    m_matrixBuff.destroy(m_device);
+
+    // loadModel() resources
+    for (auto &t : m_objText)
+      t.destroy(m_device);
+
+    for (auto &ob : m_objData) {
+      ob.vertexBuffer.destroy(m_device);
+      ob.indexBuffer.destroy(m_device);
+      ob.matColorBuffer.destroy(m_device);
+      ob.matIndexBuffer.destroy(m_device);
+    }
+
+    // postProcess() resources
     m_postDesc.destroy(m_device);
     m_renderTarget.destroy(m_device);
 
+    // createPostPipeline() resources
     vkDestroyPipeline(m_device, m_postPipeline, nullptr);
     vkDestroyPipelineLayout(m_device, m_postPipelineLayout, nullptr);
     for (uint32_t i = 0; i < m_imageCount; i++) {
       vkDestroyFramebuffer(m_device, m_framebuffers[i], nullptr);
     }
 
+    // createPostRenderPass() resources
     vkDestroyRenderPass(m_device, m_postRenderPass, nullptr);
+
+    // createDepthResource() resources
     m_depthImage.destroy(m_device);
 
+    // createSwapchain() resources
     vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
     for (int i = 0; i < m_imageCount; ++i) {
         vkDestroyImageView(m_device, m_imageViews[i], nullptr);
@@ -54,11 +78,17 @@ void VkApp::destroyAllVulkanResources()
         vkDestroySemaphore(m_device, m_imageAvailableSemaphores[i], nullptr);
         vkDestroySemaphore(m_device, m_renderFinishedSemaphores[i], nullptr);
     }
+
+    // getSurface() resources
     vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
 
+    // createCommandPool() resources
     vkDestroyCommandPool(m_device, m_cmdPool, nullptr);
 
+    // createDevice() resources
     vkDestroyDevice(m_device, nullptr);
+
+    // createInstance() resources
     vkDestroyInstance(m_instance, nullptr);
 }
 

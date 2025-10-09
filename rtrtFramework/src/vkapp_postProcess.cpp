@@ -115,11 +115,11 @@ void VkApp::createPostPipeline()
 
 
     // @@ Projects 2 and beyond: What we eventually want:
-    //createInfo.setLayoutCount         = 1;
-    //createInfo.pSetLayouts            = &m_postDesc.descSetLayout;
+    createInfo.setLayoutCount         = 1;
+    createInfo.pSetLayouts            = &m_postDesc.descSetLayout;
     // @@ Project 1: What we can do for now:
-    createInfo.setLayoutCount         = 0;
-    createInfo.pSetLayouts            = nullptr;
+    // createInfo.setLayoutCount         = 0;
+    // createInfo.pSetLayouts            = nullptr;
     
     createInfo.pushConstantRangeCount = 0;
     createInfo.pPushConstantRanges    = nullptr;
@@ -294,8 +294,8 @@ void VkApp::postProcess()
             / static_cast<float>(m_windowSize.height);
         vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_postPipeline);
         // Eventually uncomment this
-        //vkCmdBindDescriptorSets(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-        //                        m_postPipelineLayout, 0, 1, &m_postDesc.descSet, 0, nullptr);
+        vkCmdBindDescriptorSets(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                               m_postPipelineLayout, 0, 1, &m_postDesc.descSet, 0, nullptr);
 
         // Weird! This draws 3 vertices but with no vertices/triangles buffers bound in.
         // Hint: The vertex shader fabricates vertices from gl_VertexIndex

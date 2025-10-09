@@ -35,13 +35,18 @@ void VkApp::destroyAllVulkanResources()
 
     // Destroy all vulkan objects.
     // ...  All objects created on m_device must be destroyed before m_device.
+    m_postDesc.destroy(m_device);
+    m_renderTarget.destroy(m_device);
+
     vkDestroyPipeline(m_device, m_postPipeline, nullptr);
     vkDestroyPipelineLayout(m_device, m_postPipelineLayout, nullptr);
     for (uint32_t i = 0; i < m_imageCount; i++) {
       vkDestroyFramebuffer(m_device, m_framebuffers[i], nullptr);
     }
+
     vkDestroyRenderPass(m_device, m_postRenderPass, nullptr);
     m_depthImage.destroy(m_device);
+
     vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
     for (int i = 0; i < m_imageCount; ++i) {
         vkDestroyImageView(m_device, m_imageViews[i], nullptr);
@@ -50,7 +55,9 @@ void VkApp::destroyAllVulkanResources()
         vkDestroySemaphore(m_device, m_renderFinishedSemaphores[i], nullptr);
     }
     vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
+
     vkDestroyCommandPool(m_device, m_cmdPool, nullptr);
+
     vkDestroyDevice(m_device, nullptr);
     vkDestroyInstance(m_instance, nullptr);
 }

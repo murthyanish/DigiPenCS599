@@ -43,8 +43,8 @@ VkApp::VkApp(App* _app) : app(_app)
     createPostRenderPass();		// -> m_postRenderPass
     createPostFrameBuffers();	// -> m_framebuffers
 
-    // createRenderTarget();		// -> m_renderTarget
-    // createPostDescriptor();		// -> m_postDesc
+    createRenderTarget();		// -> m_renderTarget
+    createPostDescriptor();		// -> m_postDesc
     createPostPipeline();		// -> m_postPipelineLayout
 
     #ifdef GUI

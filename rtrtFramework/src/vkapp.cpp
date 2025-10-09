@@ -86,14 +86,14 @@ void VkApp::drawFrame()
     vkBeginCommandBuffer(m_commandBuffer, &beginInfo);
     
     {   // Extra indent for code clarity
-        // updateCameraBuffer();
+        updateCameraBuffer();
         
         // Draw scene
         // if (useRaytracer) {
         //     raytrace();`
         //     denoise();
         // } else
-        //     rasterize();
+            rasterize();
         
         postProcess(); //  tone mapper and output to swapchain image.
     }   // Done recording;  Execute!

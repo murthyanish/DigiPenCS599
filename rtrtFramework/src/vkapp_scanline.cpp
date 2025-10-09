@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <stdexcept>
 #include <string>
 #include <cstring>              // for memcpy
 #include <vector>
@@ -8,6 +9,7 @@
 #include <math.h>
 
 #include "vkapp.h"
+#include "vulkan_core.h"
 
 #define GLM_FORCE_RADIANS
 #define GLM_SWIZZLE
@@ -130,7 +132,11 @@ void VkApp::createScRenderPass()
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies = &dependency;
     
-    vkCreateRenderPass(m_device, &renderPassInfo, nullptr, &m_scRenderPass);
+    if (vkCreateRenderPass(m_device,
+                           &renderPassInfo,
+                           nullptr,
+                           &m_scRenderPass) != VK_SUCCESS)
+      throw std::runtime_error("vkCreateRenderPass scRenderPass failed.");
 
     std::vector<VkImageView> attachments = {m_renderTarget.imageView, m_depthImage.imageView};
 
@@ -141,7 +147,11 @@ void VkApp::createScRenderPass()
     info.width           = m_windowSize.width;
     info.height          = m_windowSize.height;
     info.layers          = 1;
-    vkCreateFramebuffer(m_device, &info, nullptr, &m_scFramebuffer);
+    if (vkCreateFramebuffer(m_device,
+                            &info,
+                            nullptr,
+                            &m_scFramebuffer) != VK_SUCCESS)
+      throw std::runtime_error("vkCreateFramebuffer scFramebuffer failed.");
 
     
     // @@ Verify success of vkCreateRenderPass and vkCreateFramebuffer
@@ -168,7 +178,7 @@ void VkApp::createScDescriptorSet()
               
     m_scDesc.write(m_device, 0, m_matrixBuff.buffer);
     m_scDesc.write(m_device, 1, m_objDescriptionBuff.buffer);
-    m_scDesc.write(m_device, 2, m_objText);    
+    m_scDesc.write(m_device, 2, m_objText);
 
     // @@ Destroy with m_scDesc.destroy(m_device);
 }
@@ -184,7 +194,11 @@ void VkApp::createScPipeline()
     createInfo.pSetLayouts            = &m_scDesc.descSetLayout;
     createInfo.pushConstantRangeCount = 1;
     createInfo.pPushConstantRanges    = &pushConstantRanges;
-    vkCreatePipelineLayout(m_device, &createInfo, nullptr, &m_scPipelineLayout);
+    if (vkCreatePipelineLayout(m_device,
+                               &createInfo,
+                               nullptr,
+                               &m_scPipelineLayout) != VK_SUCCESS)
+        throw std::runtime_error("vkCreatePipelineLayout scPipelineLayout failed.");
 
     VkShaderModule vertShaderModule = createShaderModule(loadFile("spv/scanline.vert.spv"));
     VkShaderModule fragShaderModule = createShaderModule(loadFile("spv/scanline.frag.spv"));
@@ -296,8 +310,13 @@ void VkApp::createScPipeline()
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-    vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr,
-                              &m_scPipeline);
+    if (vkCreateGraphicsPipelines(m_device,
+                                  VK_NULL_HANDLE,
+                                  1,
+                                  &pipelineInfo,
+                                  nullptr,
+                                  &m_scPipeline) != VK_SUCCESS)
+        throw std::runtime_error("vkCreateGraphicsPipelines scPipeline failed.");
 
     // Done with the temporary spv shader modules.
     vkDestroyShaderModule(m_device, fragShaderModule, nullptr);

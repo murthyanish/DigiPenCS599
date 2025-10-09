@@ -36,6 +36,18 @@ void VkApp::destroyAllVulkanResources()
     // Destroy all vulkan objects.
     // ...  All objects created on m_device must be destroyed before m_device.
 
+    // createScPipeline() resources
+    vkDestroyPipeline(m_device, m_scPipeline, nullptr);
+    vkDestroyPipelineLayout(m_device, m_scPipelineLayout, nullptr);
+    
+
+    // createScDescriptorSet() resources
+    m_scDesc.destroy(m_device);
+
+    // createScRenderPass() resources
+    vkDestroyFramebuffer(m_device, m_scFramebuffer, nullptr);
+    vkDestroyRenderPass(m_device, m_scRenderPass, nullptr);
+
     // createObjDescriptionBuffer() resources
     m_objDescriptionBuff.destroy(m_device);
 

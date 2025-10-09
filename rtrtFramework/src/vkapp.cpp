@@ -57,9 +57,9 @@ VkApp::VkApp(App* _app) : app(_app)
     createObjDescriptionBuffer();
     
     // Scanline: Initialize scanline capabilities
-    // createScRenderPass();
-    // createScDescriptorSet();
-    // createScPipeline();
+    createScRenderPass();
+    createScDescriptorSet();
+    createScPipeline();
 
     // Raycasting ...: Initialize ray tracing capabilities
     // createRtBuffers();

@@ -54,7 +54,7 @@ void VkApp::initRayTracing()
     m_rtBuilder.setup(this, m_device, m_graphicsQueueIndex);
 
     // @@ *HERE* Destroy the temporary m_rtBuilder with m_rtBuilder.destroy()
-    m_rtBuilder.destroy();
+    // m_rtBuilder.destroy();
     // There is some question whether this destroy can go here (since
     // the builder structure has finished it's job of building the
     // acceleration structure), or at program shutdown (when

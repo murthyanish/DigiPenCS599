@@ -62,12 +62,12 @@ VkApp::VkApp(App* _app) : app(_app)
     createScPipeline();
 
     // Raycasting ...: Initialize ray tracing capabilities
-    // createRtBuffers();
-    // initRayTracing();
-    // createRtAccelerationStructure();
-    // createRtDescriptorSet();
-    // createRtPipeline();
-    // createRtShaderBindingTable();
+    createRtBuffers();
+    initRayTracing();
+    createRtAccelerationStructure();
+    createRtDescriptorSet();
+    createRtPipeline();
+    createRtShaderBindingTable();
 
     // Denoising: Initialize denoising capabilities
     // createDenoiseBuffer();
@@ -89,10 +89,10 @@ void VkApp::drawFrame()
         updateCameraBuffer();
         
         // Draw scene
-        // if (useRaytracer) {
-        //     raytrace();`
-        //     denoise();
-        // } else
+        if (useRaytracer) {
+            raytrace();
+            // denoise();
+        } else
             rasterize();
         
         postProcess(); //  tone mapper and output to swapchain image.

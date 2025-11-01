@@ -7,6 +7,7 @@
 #include <math.h>
 
 #include "vkapp.h"
+#include "vulkan_core.h"
 
 #define GLM_FORCE_RADIANS
 #define GLM_SWIZZLE
@@ -53,6 +54,7 @@ void VkApp::initRayTracing()
     m_rtBuilder.setup(this, m_device, m_graphicsQueueIndex);
 
     // @@ *HERE* Destroy the temporary m_rtBuilder with m_rtBuilder.destroy()
+    m_rtBuilder.destroy();
     // There is some question whether this destroy can go here (since
     // the builder structure has finished it's job of building the
     // acceleration structure), or at program shutdown (when
@@ -174,7 +176,8 @@ void VkApp::createRtPipeline()
     rayPipelineInfo.maxPipelineRayRecursionDepth = 10;  // Max ray recursion depth
     rayPipelineInfo.layout                       = m_rtPipelineLayout;
 
-    vkCreateRayTracingPipelinesKHR(m_device, {}, {}, 1, &rayPipelineInfo, nullptr, &m_rtPipeline);
+    if(vkCreateRayTracingPipelinesKHR(m_device, {}, {}, 1, &rayPipelineInfo, nullptr, &m_rtPipeline) != VK_SUCCESS)
+        throw std::runtime_error("vkCreateRayTracingPipelinesKHR m_rtPipeline failed.");
     for (auto& s : stages)
         vkDestroyShaderModule(m_device, s.module, nullptr);
 
@@ -232,8 +235,14 @@ void VkApp::createRtShaderBindingTable()
     uint32_t             dataSize = handleCount * handleSize;
     std::vector<uint8_t> handles(dataSize);
     printf("\n");
-    vkGetRayTracingShaderGroupHandlesKHR(m_device, m_rtPipeline,
-                                         0, handleCount, dataSize, handles.data());
+    if (vkGetRayTracingShaderGroupHandlesKHR(m_device,
+                                             m_rtPipeline,
+                                             0,
+                                             handleCount,
+                                             dataSize,
+                                             handles.data()) != VK_SUCCESS)
+        throw std::runtime_error("vkGetRayTracingShaderGroupHandlesKHR m_rtPipeline failed.");
+
     // @@ Verify success of vkGetRayTracingShaderGroupHandlesKHR.
 
     // Allocate a buffer for storing the SBT, and a staging buffer for transferring data to it.
@@ -361,6 +370,11 @@ void VkApp::raytrace()
     // PathTracing, History, and Denoise will modify this structure.
     
     // @@ Raycasting:	As directed in the project 3 document, provide 3 temporary light values.
+  
+    m_pcRay.scLightPos = scLightPos;
+    m_pcRay.scLightInt = scLightInt;
+    m_pcRay.scLightAmb = scLightAmb;
+
     // @@ Pathtracing:	As directed in the project 4 document, remove 3 temporary light values.
     // @@ History:	As directed in the project 5 document, ...
     // @@ Denoise:	As directed in the project 6 document, ...

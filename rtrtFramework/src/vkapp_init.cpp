@@ -36,10 +36,27 @@ void VkApp::destroyAllVulkanResources()
     // Destroy all vulkan objects.
     // ...  All objects created on m_device must be destroyed before m_device.
 
+    // createRtShaderBindingTable() resources
+    m_shaderBindingTableBuff.destroy(m_device);
+
+    // createRtPipeline() resources
+    vkDestroyPipelineLayout(m_device, m_rtPipelineLayout, nullptr);
+    vkDestroyPipeline(m_device, m_rtPipeline, nullptr);
+
+    // createRtDescriptorSet() resources
+    m_rtDesc.destroy(m_device);
+
+    // initRayTracing() resources
+    // m_rtBuilder.destroy();
+
+    // createRtBuffers() resources
+    m_rtColCurrBuffer.destroy(m_device);
+    m_rtColCurrBuffer.destroy(m_device);
+
     // createScPipeline() resources
     vkDestroyPipeline(m_device, m_scPipeline, nullptr);
     vkDestroyPipelineLayout(m_device, m_scPipelineLayout, nullptr);
-    
+
 
     // createScDescriptorSet() resources
     m_scDesc.destroy(m_device);

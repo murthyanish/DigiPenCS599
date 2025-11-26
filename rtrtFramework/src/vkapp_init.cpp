@@ -36,6 +36,9 @@ void VkApp::destroyAllVulkanResources()
     // Destroy all vulkan objects.
     // ...  All objects created on m_device must be destroyed before m_device.
 
+    // Project 4b resources
+    // m_lightBuff.destroy(m_device);
+
     // Project 3 resources
 
     // createRtShaderBindingTable() resources

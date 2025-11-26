@@ -153,6 +153,22 @@ bool VkApp::loadModel(const std::string &filename, glm::mat4 transform) {
   // lightList
   //      Class Emitter is defined in shaders/shared_structs.h
 
+  // Loop through all triangles
+  // for (uint i=0; i<meshdata.matIndx.size(); i++) {
+  //   // Get triangle i’s material
+  //   Material& mat = meshdata.materials[meshdata.matIndx[i]];
+  //   // Test if triangle i is an emitter
+  //   if (glm::dot(mat.emission,mat.emission) > 0.0f) {
+  //     lightList.push_back(Emitter{});
+  //     // Retrieve the triangle’s vertices:
+  //     lightList.back().index = i;
+  //     lightList.back().v0 = meshdata.vertices[meshdata.indices[3*i+0]].pos;
+  //     lightList.back().v1 = meshdata.vertices[meshdata.indices[3*i+1]].pos;
+  //     lightList.back().v2 = meshdata.vertices[meshdata.indices[3*i+2]].pos;
+  //     lightList.back().emission = mat.emission * 4.0f; // May need to scale this up by a factor of 4 or 5
+  //     // index = i
+  //     // normal and area calculated from vertices v0, v1, and v
+
 #ifdef SAN_MIGUEL
   // The San_Miguel model has many useless lights. The myloadModel
   // procedure adds one useful light.  This keeps just that one
@@ -163,6 +179,14 @@ bool VkApp::loadModel(const std::string &filename, glm::mat4 transform) {
   // @@ Project 4b is optional, but if you do it, here is where you
   // send the above lightList to the shader.  The project 4b
   // document provides details.
+  // auto lightBuff = createBufferWrap(sizeof(lightList[0])*lightList.size(),
+  //   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
+  //   | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+  //   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  //   VkCommandBuffer commandBuffer = createTempCmdBuffer();
+  //   vkCmdUpdateBuffer(commandBuffer, m_lightBuff.buffer, 0,
+  //   sizeof(emiterList[0])*emitterList.size(), emitterList.data());
+  //   submitTempCmdBuffer(commandBuffer);
 
   ObjData object;
   object.nbIndices = static_cast<uint32_t>(meshdata.indices.size());

@@ -82,10 +82,13 @@ struct PushConstantRaster
 struct PushConstantRay
 {
     // @@ Raycasting:	Declare 3 temporary light values.  
-    ALIGNAS(16) vec3 scLightPos;
-    ALIGNAS(16) vec3 scLightInt;
-    ALIGNAS(16) vec3 scLightAmb;
+    // ALIGNAS(16) vec3 scLightPos;
+    // ALIGNAS(16) vec3 scLightInt;
+    // ALIGNAS(16) vec3 scLightAmb;
     // @@ Pathtracing:	Remove those 3 temporary light values. 
+    ALIGNAS(4) uint frameSeed;
+    ALIGNAS(4) float rr;
+    ALIGNAS(4) int depth;
     // @@ History:	 ...
     // @@ Denoise:	 ...
     ALIGNAS(4) bool clear;  // Tell the ray generation shader to start accumulation from scratch
@@ -123,6 +126,7 @@ struct RayPayload
     int instanceIndex;  // Index of the object instance hit (we have only one, so =0)
     int primitiveIndex; // Index of the hit triangle primitive within object
     vec3 bc;            // Barycentric coordinates of the hit point within triangle
+    uint seed;
 };
 
 #endif

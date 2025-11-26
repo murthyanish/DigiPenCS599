@@ -368,14 +368,23 @@ void VkApp::raytrace()
     // defined in shaders/shared_structs.h) for the ray tracing
     // pipeline.  Each of the following projects, RayCasting,
     // PathTracing, History, and Denoise will modify this structure.
-    
+
     // @@ Raycasting:	As directed in the project 3 document, provide 3 temporary light values.
-  
-    m_pcRay.scLightPos = scLightPos;
-    m_pcRay.scLightInt = scLightInt;
-    m_pcRay.scLightAmb = scLightAmb;
+ 
+    // m_pcRay.scLightPos = scLightPos;
+    // m_pcRay.scLightInt = scLightInt;
+    // m_pcRay.scLightAmb = scLightAmb;
 
     // @@ Pathtracing:	As directed in the project 4 document, remove 3 temporary light values.
+ 
+    m_pcRay.frameSeed = rand() % 32768;
+    m_pcRay.rr = 0.7;
+    m_pcRay.depth = 1;
+    while (float(rand())/RAND_MAX < m_pcRay.rr) m_pcRay.depth++;
+    // m_pcRay.depth = std::min(m_pcRay.depth, 4);
+    m_pcRay.clear = app->myCamera.modified;
+    app->myCamera.modified = false;
+
     // @@ History:	As directed in the project 5 document, ...
     // @@ Denoise:	As directed in the project 6 document, ...
     m_pcRay.alignmentTest = 1234;

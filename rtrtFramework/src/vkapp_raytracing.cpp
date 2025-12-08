@@ -30,6 +30,51 @@ void VkApp::createRtBuffers()
 
     initImageWrap(m_rtColCurrBuffer, m_windowSize, format, flags, mem, aspect, layout);
     // Here will be 5 more buffers similarly created with initImageWrap.
+  // {
+  //   VkFormat format = VK_FORMAT_R32G32B32A32_SFLOAT;
+  //   VkImageUsageFlags flags = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  //   VkMemoryPropertyFlags mem = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+  //   VkImageAspectFlagBits aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+  //   VkImageLayout layout = VK_IMAGE_LAYOUT_GENERAL;
+  //
+    initImageWrap(m_rtColPrevBuffer, m_windowSize, format, flags, mem, aspect, layout);
+  // }
+  // {
+  //   VkFormat format = VK_FORMAT_R32G32B32A32_SFLOAT;
+  //   VkImageUsageFlags flags = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  //   VkMemoryPropertyFlags mem = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+  //   VkImageAspectFlagBits aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+  //   VkImageLayout layout = VK_IMAGE_LAYOUT_GENERAL;
+  //
+    initImageWrap(m_rtNdCurrBuffer, m_windowSize, format, flags, mem, aspect, layout);
+  // }
+  // {
+  //   VkFormat format = VK_FORMAT_R32G32B32A32_SFLOAT;
+  //   VkImageUsageFlags flags = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  //   VkMemoryPropertyFlags mem = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+  //   VkImageAspectFlagBits aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+  //   VkImageLayout layout = VK_IMAGE_LAYOUT_GENERAL;
+
+    initImageWrap(m_rtNdPrevBuffer, m_windowSize, format, flags, mem, aspect, layout);
+  // }
+  // {
+  //   VkFormat format = VK_FORMAT_R32G32B32A32_SFLOAT;
+  //   VkImageUsageFlags flags = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  //   VkMemoryPropertyFlags mem = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+  //   VkImageAspectFlagBits aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+  //   VkImageLayout layout = VK_IMAGE_LAYOUT_GENERAL;
+  //
+    initImageWrap(m_rtKdCurrBuffer, m_windowSize, format, flags, mem, aspect, layout);
+  // }
+  // {
+  //   VkFormat format = VK_FORMAT_R32G32B32A32_SFLOAT;
+  //   VkImageUsageFlags flags = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  //   VkMemoryPropertyFlags mem = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+  //   VkImageAspectFlagBits aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+  //   VkImageLayout layout = VK_IMAGE_LAYOUT_GENERAL;
+  //
+    initImageWrap(m_rtKdPrevBuffer, m_windowSize, format, flags, mem, aspect, layout);
+  // }
 
     // @@ Destroy with m_rtColCurrBuffer.destroy(m_device) and eventually 5 more destroy calls.
 }
@@ -72,6 +117,16 @@ void VkApp::createRtDescriptorSet()
              VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR},
             {1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1,  // Col output image
              VK_SHADER_STAGE_RAYGEN_BIT_KHR},
+            {2, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1,  // Col output image
+             VK_SHADER_STAGE_RAYGEN_BIT_KHR},
+            {3, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1,  // Col output image
+             VK_SHADER_STAGE_RAYGEN_BIT_KHR},
+            {4, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1,  // Col output image
+             VK_SHADER_STAGE_RAYGEN_BIT_KHR},
+            {5, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1,  // Col output image
+             VK_SHADER_STAGE_RAYGEN_BIT_KHR},
+            {6, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1,  // Col output image
+             VK_SHADER_STAGE_RAYGEN_BIT_KHR},
         });
     
 
@@ -79,6 +134,11 @@ void VkApp::createRtDescriptorSet()
 
     m_rtDesc.write(m_device, 0, m_rtBuilder.getAccelerationStructure());
     m_rtDesc.write(m_device, 1, m_rtColCurrBuffer.Descriptor());
+    m_rtDesc.write(m_device, 2, m_rtColPrevBuffer.Descriptor());
+    m_rtDesc.write(m_device, 3, m_rtNdCurrBuffer.Descriptor());
+    m_rtDesc.write(m_device, 4, m_rtNdPrevBuffer.Descriptor());
+    m_rtDesc.write(m_device, 5, m_rtKdCurrBuffer.Descriptor());
+    m_rtDesc.write(m_device, 6, m_rtKdPrevBuffer.Descriptor());
     //@@ Destroy the descriptor set with: m_rtDesc.destroy(m_device)
 
 }
@@ -424,5 +484,8 @@ void VkApp::raytrace()
     //    m_rtColCurrBuffer ==>  m_rtColPrevBuffer;
     //    m_rtKdCurrBuffer  ==>  m_rtKdPrevBuffer
     //    m_rtNdCurrBuffer  ==>  m_rtNdPrevBuffer
+    CmdCopyImage(m_rtColCurrBuffer, m_rtColPrevBuffer);
+    CmdCopyImage(m_rtNdCurrBuffer, m_rtNdPrevBuffer);
+    CmdCopyImage(m_rtKdCurrBuffer, m_rtKdPrevBuffer);
 }
 

@@ -122,6 +122,7 @@ struct PushConstantDenoise
 struct RayPayload
 {
     bool hit;           // Does the ray intersect anything or not?
+    float hitDist;
     vec3 hitPos;	// The world coordinates of the hit point.      
     int instanceIndex;  // Index of the object instance hit (we have only one, so =0)
     int primitiveIndex; // Index of the hit triangle primitive within object

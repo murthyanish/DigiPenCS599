@@ -56,6 +56,11 @@ void VkApp::destroyAllVulkanResources()
 
     // createRtBuffers() resources
     m_rtColCurrBuffer.destroy(m_device);
+    m_rtColPrevBuffer.destroy(m_device);
+    m_rtNdCurrBuffer.destroy(m_device);
+    m_rtNdPrevBuffer.destroy(m_device);
+    m_rtKdCurrBuffer.destroy(m_device);
+    m_rtKdPrevBuffer.destroy(m_device);
 
     // Project 1&2 resources
 

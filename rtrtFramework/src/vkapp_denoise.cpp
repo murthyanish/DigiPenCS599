@@ -121,5 +121,6 @@ void VkApp::denoise()
         // the input buffer (m_renderTarget) for the next denoising
         // loop pass.  See VkApp::raytrace for 4 examples of using
         // VkApp::CmdCopyImage to copy an image.
+        CmdCopyImage(m_denoiseBuffer, m_renderTarget);
     }
 }

@@ -4,6 +4,8 @@
 
 #include "shared_structs.h"
 
+const int imageWidth = 1280;
+const int imageHeight = 768;
 const int GROUP_SIZE = 128;
 layout(local_size_x = GROUP_SIZE, local_size_y = 1, local_size_z = 1) in;
 layout(set = 0, binding = 0, rgba32f) uniform image2D inImage;
@@ -14,10 +16,16 @@ layout(set = 0, binding = 3, rgba32f) uniform image2D ndBuff;
 layout(push_constant) uniform _pcDenoise { PushConstantDenoise pc; };
 float gaussian[5] = float[5](1.0/16.0, 4.0/16.0, 6.0/16.0, 4.0/16.0, 1.0/16.0);
 
+bool bad(vec3 v) { return any(isnan(v)) || any(isinf(v)); }
+bool badf(float v) { return isnan(v) || isinf(v); }
+
 void main()
 {
     ivec2 gpos = ivec2(gl_GlobalInvocationID.xy);  // Index of central pixel being denoised
-    
+
+    if (gpos.x < 0 || gpos.y < 0 || gpos.x >= imageWidth || gpos.y >= imageHeight)
+        return;
+
     // Values associated with the central pixel
     // @@ Calculate/read each of these for the CENTRAL PIXEL at gpos
     // cKd = read kdBuff at gpos, clamp value to vec3(0.1) or above
@@ -45,6 +53,10 @@ void main()
         {
             ivec2 offset = ivec2(i,j)*pc.stepwidth; // Offset of 5x5 pixels **with holes**
             ivec2 ppos = gpos + offset;
+
+            // Clamp sample position to image bounds (avoids OOB reads)
+            ppos.x = clamp(ppos.x, 0, imageWidth - 1);
+            ppos.y = clamp(ppos.y, 0, imageHeight - 1);
 
             // Calculate/read a similar set of values as above,
             // but for the OFFSET PIXEL at location  gpos+offset

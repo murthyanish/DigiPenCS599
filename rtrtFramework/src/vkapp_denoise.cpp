@@ -92,6 +92,8 @@ void VkApp::denoise()
 
         // Tell the A-Trous algorithm its "hole" size
         m_pcDenoise.stepwidth = stepwidth;
+        m_pcDenoise.normFactor = 0.003;
+        m_pcDenoise.depthFactor = 0.007;
         stepwidth *= 2;
 
         // Select the compute shader, and its descriptor set and push constant

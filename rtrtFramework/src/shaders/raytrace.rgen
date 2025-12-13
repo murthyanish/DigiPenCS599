@@ -303,127 +303,132 @@ void main()
     // @@ Raycasting: Write C to the output pixel
     // imageStore(colCurr, ivec2(gl_LaunchIDEXT.xy), vec4(C,1.0));
     // @@ Pathtracing: Accumulate C into output pixel.
-    // if (pcRay.clear)
-    //     imageStore(colCurr, ivec2(gl_LaunchIDEXT.xy), vec4(C,1.0));
-    // else {
-    //     vec4 old = imageLoad(colCurr, ivec2(gl_LaunchIDEXT.xy));
-    //     vec3 Ave = old.xyz;
-    //     float N = old.w;
-    //     Ave += (C - Ave) / (N+1);
-    //     N += 1;
-    //     imageStore(colCurr, ivec2(gl_LaunchIDEXT.xy), vec4(Ave,N));
-    // }
-    // @@ History: Accumulate C with a back-projected pixel and write to the output pixel
-    const vec4 screenH = (mats.priorViewProj * vec4(firstPos, 1.0)); //Project to prev buffers
-    const vec2 screen = ((screenH.xy/screenH.w) + vec2(1.0)) / 2.0; //H-division and map to [0,1]
-
-    vec3 oldAve;
-    float oldN;
-
-    // Finding accumulation values from previous frame, oldAve and oldN:
-    if (firstHit == false || screen.x < 0 || screen.x > 1 || screen.y < 0 || screen.y > 1) {
-        // If no history, restart accumulation
-        oldAve = vec3(0.5);
-        oldN = 1;
-    }
-    else {
-        // if (pcRay.clear)
-        //     imageStore(colCurr, ivec2(gl_LaunchIDEXT.xy), vec4(C,1.0));
-        // Calculating weighted bilinear interp of the 4 neighboring pixels in colPrev:
-        // Finding the neighboring pixels:
-        const vec2 floc = screen * gl_LaunchSizeEXT.xy - vec2(0.5);
-        const vec2 pxOffset = fract(floc); // 0 to 1 offset between 4 neighbors.
-        const ivec2 iloc = ivec2(floc); // (0,0) corner of the 4 neighbors.
-        // imageStore(colCurr,ivec2(gl_LaunchIDEXT.xy), vec4(imageLoad(ndPrev, iloc).xyz,0));
-        // return;
-
-        // Calculating the weights:
-        const float nThresh = 0.95;
-        const float dThresh = 0.15;
-
-        // vec4 w;
-        // vec4 b;
-        float w[2][2];
-        float wSum = 0;
-        float b[2][2];
-
-        // b[0] = (1-pxOffset.x) * (1-pxOffset.y);
-        // b[1] = (pxOffset.x) * (1-pxOffset.y);
-        // b[2] = (1-pxOffset.x) * (pxOffset.y);
-        // b[3] = (pxOffset.x) * (pxOffset.y);
-
-        b[0][0] = (1-pxOffset.x) * (1-pxOffset.y);
-        b[0][1] = (pxOffset.x) * (1-pxOffset.y);
-        b[1][0] = (1-pxOffset.x) * (pxOffset.y);
-        b[1][1] = (pxOffset.x) * (pxOffset.y);
-
-        for (int i = 0; i < 2; ++i) {
-            for (int j = 0; j < 2; ++j) {
-                const vec4 prevNd = imageLoad(ndPrev, iloc+ivec2(i,j));
-                const vec3 prevNrm = prevNd.xyz;
-                const float prevDepth = prevNd.w;
-
-                float dWeight = 0;
-                float nWeight = 0;
-
-                if (abs(firstDepth - prevDepth) < dThresh) {
-                    dWeight = 1;
-                }
-                if (dot(firstNrm, prevNrm) > nThresh) {
-                    nWeight = 1;
-                }
-                // w[i*2 + j] = b[i*2 + j] * dWeight * nWeight;
-                // wSum += w[i*2 + j];
-                w[i][j] = b[i][j] * dWeight * nWeight;
-                wSum += w[i][j];
-            }
-        }
-
-        if (wSum > 0) {
-            // Calculating the weighted color: (This replaces `old`)
-            // vec4 pPrev;
-            vec4 P = vec4(0);
-
-            for (int i = 0; i < 2; ++i) {
-              for (int j = 0; j < 2; ++j) {
-                  // P = P + (w[i*2 + j] * imageLoad(colPrev, iloc+ivec2(i,j)));
-                  P = P + (w[i][j] * imageLoad(colPrev, iloc+ivec2(i,j)));
-              }
-            }
-            P = P / wSum;
-
-            oldAve = P.xyz;
-            oldN = P.w;
-        }
-        else {
-            oldAve = vec3(0.5);
-            oldN = 1;
-        }
-    }
-
-    float newN = oldN + 1;
-    vec3 newAve = oldAve + (C - oldAve)/newN;
-
-    if ( any(isnan(vec4(newAve,newN))) || any(isinf(vec4(newAve,newN))) ) {
-        imageStore(colCurr,ivec2(gl_LaunchIDEXT.xy), vec4(C,0));
-    }
-    else {
-        imageStore(colCurr,ivec2(gl_LaunchIDEXT.xy), vec4(newAve,newN));
-    }
-
-    if ( any(isnan(firstKd)) || any(isinf(firstKd)) ) {
+    if (pcRay.clear) {
+        imageStore(colCurr, ivec2(gl_LaunchIDEXT.xy), vec4(C,1.0));
         imageStore(kdCurr, ivec2(gl_LaunchIDEXT.xy), vec4(matDiffuse,0));
-    }
-    else {
-        imageStore(kdCurr, ivec2(gl_LaunchIDEXT.xy), vec4(firstKd,0));
-    }
-
-    if ( any(isnan(vec4(firstNrm,firstDepth))) || any(isinf(vec4(firstNrm,firstDepth))) ) {
         imageStore(ndCurr, ivec2(gl_LaunchIDEXT.xy), vec4(nrm, payload.hitDist));
     }
     else {
+        vec4 old = imageLoad(colCurr, ivec2(gl_LaunchIDEXT.xy));
+        vec3 Ave = old.xyz;
+        float N = old.w;
+        Ave += (C - Ave) / (N+1);
+        N += 1;
+        imageStore(colCurr, ivec2(gl_LaunchIDEXT.xy), vec4(Ave,N));
+        imageStore(kdCurr, ivec2(gl_LaunchIDEXT.xy), vec4(firstKd,0));
         imageStore(ndCurr, ivec2(gl_LaunchIDEXT.xy), vec4(firstNrm,firstDepth));
     }
+    // @@ History: Accumulate C with a back-projected pixel and write to the output pixel
+    // const vec4 screenH = (mats.priorViewProj * vec4(firstPos, 1.0)); //Project to prev buffers
+    // const vec2 screen = ((screenH.xy/screenH.w) + vec2(1.0)) / 2.0; //H-division and map to [0,1]
+    //
+    // vec3 oldAve;
+    // float oldN;
+    //
+    // // Finding accumulation values from previous frame, oldAve and oldN:
+    // if (firstHit == false || screen.x < 0 || screen.x > 1 || screen.y < 0 || screen.y > 1) {
+    //     // If no history, restart accumulation
+    //     oldAve = vec3(0.5);
+    //     oldN = 1;
+    // }
+    // else {
+    //     // if (pcRay.clear)
+    //     //     imageStore(colCurr, ivec2(gl_LaunchIDEXT.xy), vec4(C,1.0));
+    //     // Calculating weighted bilinear interp of the 4 neighboring pixels in colPrev:
+    //     // Finding the neighboring pixels:
+    //     const vec2 floc = screen * gl_LaunchSizeEXT.xy - vec2(0.5);
+    //     const vec2 pxOffset = fract(floc); // 0 to 1 offset between 4 neighbors.
+    //     const ivec2 iloc = ivec2(floc); // (0,0) corner of the 4 neighbors.
+    //     // imageStore(colCurr,ivec2(gl_LaunchIDEXT.xy), vec4(imageLoad(ndPrev, iloc).xyz,0));
+    //     // return;
+    //
+    //     // Calculating the weights:
+    //     const float nThresh = 0.95;
+    //     const float dThresh = 0.15;
+    //
+    //     // vec4 w;
+    //     // vec4 b;
+    //     float w[2][2];
+    //     float wSum = 0;
+    //     float b[2][2];
+    //
+    //     // b[0] = (1-pxOffset.x) * (1-pxOffset.y);
+    //     // b[1] = (pxOffset.x) * (1-pxOffset.y);
+    //     // b[2] = (1-pxOffset.x) * (pxOffset.y);
+    //     // b[3] = (pxOffset.x) * (pxOffset.y);
+    //
+    //     b[0][0] = (1-pxOffset.x) * (1-pxOffset.y);
+    //     b[0][1] = (pxOffset.x) * (1-pxOffset.y);
+    //     b[1][0] = (1-pxOffset.x) * (pxOffset.y);
+    //     b[1][1] = (pxOffset.x) * (pxOffset.y);
+    //
+    //     for (int i = 0; i < 2; ++i) {
+    //         for (int j = 0; j < 2; ++j) {
+    //             const vec4 prevNd = imageLoad(ndPrev, iloc+ivec2(i,j));
+    //             const vec3 prevNrm = prevNd.xyz;
+    //             const float prevDepth = prevNd.w;
+    //
+    //             float dWeight = 0;
+    //             float nWeight = 0;
+    //
+    //             if (abs(firstDepth - prevDepth) < dThresh) {
+    //                 dWeight = 1;
+    //             }
+    //             if (dot(firstNrm, prevNrm) > nThresh) {
+    //                 nWeight = 1;
+    //             }
+    //             // w[i*2 + j] = b[i*2 + j] * dWeight * nWeight;
+    //             // wSum += w[i*2 + j];
+    //             w[i][j] = b[i][j] * dWeight * nWeight;
+    //             wSum += w[i][j];
+    //         }
+    //     }
+    //
+    //     if (wSum > 0) {
+    //         // Calculating the weighted color: (This replaces `old`)
+    //         // vec4 pPrev;
+    //         vec4 P = vec4(0);
+    //
+    //         for (int i = 0; i < 2; ++i) {
+    //           for (int j = 0; j < 2; ++j) {
+    //               // P = P + (w[i*2 + j] * imageLoad(colPrev, iloc+ivec2(i,j)));
+    //               P = P + (w[i][j] * imageLoad(colPrev, iloc+ivec2(i,j)));
+    //           }
+    //         }
+    //         P = P / wSum;
+    //
+    //         oldAve = P.xyz;
+    //         oldN = P.w;
+    //     }
+    //     else {
+    //         oldAve = vec3(0.5);
+    //         oldN = 1;
+    //     }
+    // }
+    //
+    // float newN = oldN + 1;
+    // vec3 newAve = oldAve + (C - oldAve)/newN;
+    // //
+    // if ( any(isnan(vec4(newAve,newN))) || any(isinf(vec4(newAve,newN))) ) {
+    //     imageStore(colCurr,ivec2(gl_LaunchIDEXT.xy), vec4(C,0));
+    // }
+    // else {
+    //     imageStore(colCurr,ivec2(gl_LaunchIDEXT.xy), vec4(newAve,newN));
+    // }
+    //
+    // if ( any(isnan(firstKd)) || any(isinf(firstKd)) ) {
+    //     imageStore(kdCurr, ivec2(gl_LaunchIDEXT.xy), vec4(matDiffuse,0));
+    // }
+    // else {
+    //     imageStore(kdCurr, ivec2(gl_LaunchIDEXT.xy), vec4(firstKd,0));
+    // }
+    //
+    // if ( any(isnan(vec4(firstNrm,firstDepth))) || any(isinf(vec4(firstNrm,firstDepth))) ) {
+    //     imageStore(ndCurr, ivec2(gl_LaunchIDEXT.xy), vec4(nrm, payload.hitDist));
+    // }
+    // else {
+    //     imageStore(ndCurr, ivec2(gl_LaunchIDEXT.xy), vec4(firstNrm,firstDepth));
+    // }
 
 }
 

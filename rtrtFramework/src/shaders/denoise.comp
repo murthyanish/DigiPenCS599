@@ -21,8 +21,11 @@ void main()
     // Values associated with the central pixel
     // @@ Calculate/read each of these for the CENTRAL PIXEL at gpos
     // cKd = read kdBuff at gpos, clamp value to vec3(0.1) or above
+    vec3 cKd  = max(imageLoad(kdBuff, gpos).xyz, vec3(0.1));
     // cVal = read .xyz of inImage at gpos;  the pixel value to be denoised
+    vec3 cVal = imageLoad(inImage, gpos).xyz;
     // cDem = cVal/cKd;  The pixel value demodulated.
+    vec3 cDem = cVal / cKd;
     // cNrm   = read ndBuff .xyz at gpos
     // cDepth = read ndBuff .w at gpos
     

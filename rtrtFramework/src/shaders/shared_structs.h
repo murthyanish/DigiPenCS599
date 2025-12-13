@@ -116,7 +116,8 @@ struct Material  // Created by readModel; used in shaders
 // Push constant structure for the ray tracer
 struct PushConstantDenoise
 {
-    int  stepwidth;  
+    float normFactor, depthFactor;
+    int  stepwidth;
 };
 
 struct RayPayload

@@ -15,6 +15,4 @@ to render `.md` documents, which supports this.)
 
 ## Notes
 
-- The denoising is implemented as stated in the document, but it is not
-  functioning as expected. I am making a submission anyway to ensure I
-  get at least some marks.
+- Some odd issues related to normals I think at the edges.

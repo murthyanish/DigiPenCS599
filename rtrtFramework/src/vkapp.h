@@ -266,9 +266,11 @@ public:
     void imageLayoutBarrier(VkCommandBuffer cmdbuffer,
                             VkImage image,
                             VkImageLayout oldImageLayout,
-                            VkAccessFlagBits oldImageAccess,
+                            VkAccessFlags oldImageAccess,
                             VkImageLayout newImageLayout,
-                            VkAccessFlagBits newImageAccess,
+                            VkAccessFlags newImageAccess,
+                            VkPipelineStageFlags srcStageMask,
+                            VkPipelineStageFlags destStageMask,
                             VkImageAspectFlags aspectMask=VK_IMAGE_ASPECT_COLOR_BIT);
     // Run loop 
     bool useRaytracer = true;
@@ -276,6 +278,7 @@ public:
     void ResetRtAccumulation();
     
     glm::mat4 m_priorViewProj{};
+    glm::mat4 m_priorViewInverse{1.0f};
     void updateCameraBuffer();
     void rasterize();
     void raytrace();

@@ -371,12 +371,23 @@ void VkApp::CmdCopyImage(ImageWrap& src, ImageWrap& dst)
     imageCopyRegion.extent.height             = m_windowSize.height;
     imageCopyRegion.extent.depth              = 1;
 
+    // FIX: the barriers must cover the stages that actually touch these
+    // images. The ray-gen shader writes Curr and reads Prev; the post-process
+    // fragment shader reads m_renderTarget. The old barriers only covered
+    // TRANSFER -> TRANSFER with no access bits, so nothing guaranteed that
+    // (a) the copy saw this frame's ray-gen writes, or (b) next frame's
+    // ray-gen saw the copied Prev data.
+    const VkPipelineStageFlags shaderStages =
+        VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+
     imageLayoutBarrier(m_commandBuffer, src.image,
-                       VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_NONE,
-                       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT);
+                       VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_SHADER_WRITE_BIT,
+                       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT,
+                       shaderStages, VK_PIPELINE_STAGE_TRANSFER_BIT);
     imageLayoutBarrier(m_commandBuffer, dst.image,
-                       VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_NONE,
-                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT);
+                       VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_SHADER_READ_BIT,
+                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT,
+                       shaderStages, VK_PIPELINE_STAGE_TRANSFER_BIT);
     
     vkCmdCopyImage(m_commandBuffer,
                    src.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
@@ -385,18 +396,22 @@ void VkApp::CmdCopyImage(ImageWrap& src, ImageWrap& dst)
     
     imageLayoutBarrier(m_commandBuffer, src.image,
                        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT,
-                       VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_NONE);
+                       VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
+                       VK_PIPELINE_STAGE_TRANSFER_BIT, shaderStages);
     imageLayoutBarrier(m_commandBuffer, dst.image,
                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT,
-                       VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_NONE);
+                       VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
+                       VK_PIPELINE_STAGE_TRANSFER_BIT, shaderStages);
 }
 
 void VkApp::imageLayoutBarrier(VkCommandBuffer cmdbuffer,
                                VkImage image,
                                VkImageLayout oldImageLayout,
-                               VkAccessFlagBits oldImageAccess,
+                               VkAccessFlags oldImageAccess,
                                VkImageLayout newImageLayout,
-                               VkAccessFlagBits newImageAccess,
+                               VkAccessFlags newImageAccess,
+                               VkPipelineStageFlags srcStageMask,
+                               VkPipelineStageFlags destStageMask,
                                VkImageAspectFlags aspectMask)
 {
     VkImageSubresourceRange subresourceRange;
@@ -415,8 +430,6 @@ void VkApp::imageLayoutBarrier(VkCommandBuffer cmdbuffer,
     imageMemoryBarrier.dstAccessMask    = newImageAccess;
     imageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    VkPipelineStageFlags srcStageMask      = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    VkPipelineStageFlags destStageMask     = VK_PIPELINE_STAGE_TRANSFER_BIT;
   
     vkCmdPipelineBarrier(cmdbuffer, srcStageMask, destStageMask, 0,
                          0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);

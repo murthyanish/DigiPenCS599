@@ -17,7 +17,7 @@ VPATH = $(LIBDIR)/imgui-master $(LIBDIR)/imgui-master/backends shaders
 # Where the .o files go
 vpath %.o  $(ODIR)
 
-SDK = /usr/include/vulkan/
+SDK = $(VULKAN_SDK)/include/vulkan/
 
 pkgDir = /home/gherron/packages
 
@@ -26,7 +26,7 @@ CXX = g++
 CFLAGS = -g  $(VFLAG)  -DPROJECT_NAME=\"rtrt\"  -DPROJECT_RELDIRECTORY=\".\" 
 
 # CXXFLAGS = $(CFLAGS) -std=c++17 -I. -I$(SDK) -I$(LIBDIR)/glm -I$(LIBDIR)/imgui-master -I$(LIBDIR)/imgui-master/backends -I$(LIBDIR)  -I$(LIBDIR)/glfw/include
-CXXFLAGS = $(CFLAGS) -std=c++23 -I. -I$(SDK) -I$(LIBDIR)/glm -I$(LIBDIR)/imgui-master -I$(LIBDIR)/imgui-master/backends -I$(LIBDIR)  -I$(LIBDIR)/glfw/include
+CXXFLAGS = $(CFLAGS) -std=c++23 -I. -I$(SDK) -I$(VULKAN_SDK)/include/ -I$(LIBDIR)/glm -I$(LIBDIR)/imgui-master -I$(LIBDIR)/imgui-master/backends -I$(LIBDIR)  -I$(LIBDIR)/glfw/include
 
 LIBS =  -lassimp  -lvulkan -ldl -lpthread -lX11 -lXxf86vm -lXrandr -lXi `pkg-config --static --libs glfw3`
 

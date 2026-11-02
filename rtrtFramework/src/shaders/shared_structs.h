@@ -39,6 +39,7 @@ struct MatrixUniforms
   mat4 priorViewProj; // Camera view * projection
   mat4 viewInverse;   // Camera inverse view matrix
   mat4 projInverse;   // Camera inverse projection matrix
+  mat4 priorViewInverse; // Previous frame's inverse view (for its eye position)
 };
 
 #ifdef __cplusplus

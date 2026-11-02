@@ -198,10 +198,11 @@ void main()
             // @@ Pathtracing: break from the Monte-Carlo loop
             // break;
             // @@ History: if (i==0) record that a first-hit did not occur
-            if (i==0) {
+            if (i==0)
               firstHit = false;
-              break;
-            }
+            // FIX: a miss on ANY bounce ends the path. Previously only i==0
+            // broke out, so later misses kept bouncing with stale payload data.
+            break;
         }
         
         // If something was hit, find the object data.
@@ -215,7 +216,7 @@ void main()
           firstHit = payload.hit;
           firstPos = payload.hitPos;
           firstDepth = payload.hitDist;
-          firstNrm = nrm;
+          firstNrm = normalize(nrm); // FIX: interpolated normals aren't unit length
           firstKd = mat.diffuse;
         }
 
@@ -323,8 +324,9 @@ void main()
     // Finding accumulation values from previous frame, oldAve and oldN:
     if (firstHit == false || screen.x < 0 || screen.x > 1 || screen.y < 0 || screen.y > 1) {
         // If no history, restart accumulation
-        oldAve = vec3(0.5);
-        oldN = 1;
+        // FIX: restart from nothing. (0.5, 1) blended every new sample 50/50 with gray.
+        oldAve = vec3(0);
+        oldN = 0;
     }
     else {
         // if (pcRay.clear)
@@ -333,13 +335,17 @@ void main()
         // Finding the neighboring pixels:
         const vec2 floc = screen * gl_LaunchSizeEXT.xy - vec2(0.5);
         const vec2 pxOffset = fract(floc); // 0 to 1 offset between 4 neighbors.
-        const ivec2 iloc = ivec2(floc); // (0,0) corner of the 4 neighbors.
+        const ivec2 iloc = ivec2(floor(floc)); // (0,0) corner of the 4 neighbors. FIX: floor, not truncate (matters at the left/top edge)
         // imageStore(colCurr,ivec2(gl_LaunchIDEXT.xy), vec4(imageLoad(ndPrev, iloc).xyz,0));
         // return;
 
         // Calculating the weights:
         const float nThresh = 0.95;
         const float dThresh = 0.15;
+        // FIX: ndPrev.w holds distance from the PREVIOUS eye, so compare it
+        // with this point's distance from the previous eye, not the current one.
+        const vec3 priorEye = (mats.priorViewInverse * vec4(0, 0, 0, 1)).xyz;
+        const float firstDepthPrior = length(firstPos - priorEye);
 
         // vec4 w;
         // vec4 b;
@@ -352,21 +358,30 @@ void main()
         // b[2] = (1-pxOffset.x) * (pxOffset.y);
         // b[3] = (pxOffset.x) * (pxOffset.y);
 
+        // FIX: b[i][j] is the weight for the texel at iloc + ivec2(i,j),
+        // i.e. i steps in X and j steps in Y. The old code had b[0][1] and
+        // b[1][0] swapped, so off-center samples blended the wrong neighbors.
         b[0][0] = (1-pxOffset.x) * (1-pxOffset.y);
-        b[0][1] = (pxOffset.x) * (1-pxOffset.y);
-        b[1][0] = (1-pxOffset.x) * (pxOffset.y);
-        b[1][1] = (pxOffset.x) * (pxOffset.y);
+        b[1][0] = (pxOffset.x)   * (1-pxOffset.y);
+        b[0][1] = (1-pxOffset.x) * (pxOffset.y);
+        b[1][1] = (pxOffset.x)   * (pxOffset.y);
 
         for (int i = 0; i < 2; ++i) {
             for (int j = 0; j < 2; ++j) {
-                const vec4 prevNd = imageLoad(ndPrev, iloc+ivec2(i,j));
+                const ivec2 q = iloc + ivec2(i,j);
+                // FIX: skip neighbors that fall outside the image.
+                if (any(lessThan(q, ivec2(0))) || any(greaterThanEqual(q, ivec2(gl_LaunchSizeEXT.xy)))) {
+                    w[i][j] = 0;
+                    continue;
+                }
+                const vec4 prevNd = imageLoad(ndPrev, q);
                 const vec3 prevNrm = prevNd.xyz;
                 const float prevDepth = prevNd.w;
 
                 float dWeight = 0;
                 float nWeight = 0;
 
-                if (abs(firstDepth - prevDepth) < dThresh) {
+                if (abs(firstDepthPrior - prevDepth) < dThresh) {
                     dWeight = 1;
                 }
                 if (dot(firstNrm, prevNrm) > nThresh) {
@@ -396,8 +411,8 @@ void main()
             oldN = P.w;
         }
         else {
-            oldAve = vec3(0.5);
-            oldN = 1;
+            oldAve = vec3(0);
+            oldN = 0;
         }
     }
 

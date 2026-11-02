@@ -389,6 +389,8 @@ void VkApp::updateCameraBuffer()
     m_priorViewProj       = hostUBO.viewProj;
     hostUBO.viewInverse = glm::inverse(view);
     hostUBO.projInverse = glm::inverse(proj);
+    hostUBO.priorViewInverse = m_priorViewInverse;
+    m_priorViewInverse       = hostUBO.viewInverse;
 
     // UBO on the device, and what stages access it.
     VkBuffer deviceUBO      = m_matrixBuff.buffer;

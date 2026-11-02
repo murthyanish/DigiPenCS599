@@ -12,6 +12,10 @@
 #define pi (3.141592)
 #define pi2 (2.0*pi)
 
+// FIX 2: tuning knobs for the stability fixes below.
+const float FIREFLY_CLAMP      = 10.0; // max value of any one path sample (after exposure)
+const float MOVING_HISTORY_CAP = 120.0;  // max history weight while the camera is moving
+
 // The ray payload; structure is defined in shared_structs.h;
 // Attached to a ray, and used to communicate between shader stages.
 layout(location=0) rayPayloadEXT RayPayload payload;
@@ -51,7 +55,10 @@ vec3 EvalBrdf(vec3 N, vec3 L, vec3 V, Material mat) {
     // BRDF
     const vec3 F = mat.specular + ((vec3(1.0,1.0,1.0)-mat.specular)*pow((1.0-LH),5.0));
     const float D = ((mat.shininess+2.0)/(2.0*pi))*(pow(HN,mat.shininess));
-    const vec3 BRDF = (mat.diffuse/pi) + ((F*D)/(4*pow(max(LH,0.0000000001),2.0)));
+    // FIX 2: LH -> 0 when L and V point in nearly opposite directions. With a
+    // floor of 1e-10 the 1/(4*LH^2) term could reach ~1e20: finite (so it passed
+    // the isinf check) but large enough to keep a pixel white forever.
+    const vec3 BRDF = (mat.diffuse/pi) + ((F*D)/(4*pow(max(LH,0.1),2.0)));
     return BRDF;
 
 }
@@ -416,11 +423,24 @@ void main()
         }
     }
 
+    // FIX 2: drop invalid samples, and clamp rare huge ones (fireflies). A clamp
+    // slightly darkens very bright highlights; it's the standard tradeoff.
+    if (any(isnan(C)) || any(isinf(C)))
+        C = vec3(0);
+    C = min(C, vec3(FIREFLY_CLAMP));
+
+    // FIX 2: while the camera moves, cap how much old history counts. Each
+    // frame's bilinear reprojection blurs the history slightly; with an
+    // unbounded N, fresh sharp samples barely contribute and the blur builds up.
+    // Once the camera stops (pcRay.clear == false), N grows freely again.
+    if (pcRay.clear)
+        oldN = min(oldN, MOVING_HISTORY_CAP);
+
     float newN = oldN + 1;
     vec3 newAve = oldAve + (C - oldAve)/newN;
 
     if ( any(isnan(vec4(newAve,newN))) || any(isinf(vec4(newAve,newN))) ) {
-        imageStore(colCurr,ivec2(gl_LaunchIDEXT.xy), vec4(C,0));
+        imageStore(colCurr,ivec2(gl_LaunchIDEXT.xy), vec4(C,1));
     }
     else {
         imageStore(colCurr,ivec2(gl_LaunchIDEXT.xy), vec4(newAve,newN));
